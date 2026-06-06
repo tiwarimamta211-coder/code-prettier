@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeCraft Pro – Code Formatter & Prettier</title>
+<meta name="description" content="Free online code formatter for JavaScript, HTML, and CSS with syntax highlighting, indentation control, and instant copy.">
+
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Prettier CDN -->
+<script src="https://unpkg.com/prettier@3.3.3/standalone.js"></script>
+<script src="https://unpkg.com/prettier@3.3.3/plugins/babel.js"></script>
+<script src="https://unpkg.com/prettier@3.3.3/plugins/html.js"></script>
+<script src="https://unpkg.com/prettier@3.3.3/plugins/postcss.js"></script>
+
+<!-- Highlight.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/tomorrow-night.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --surface3: #22222c;
+    --border: #2a2a38;
+    --accent: #e8ff47;
+    --accent2: #47d1ff;
+    --accent3: #ff6b6b;
+    --text: #e8e8f0;
+    --text2: #8888a8;
+    --text3: #55556a;
+    --js: #f7df1e;
+    --html: #e34c26;
+    --css: #264de4;
+    --radius: 12px;
+    --radius-sm: 6px;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === GRID BACKGROUND === */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,71,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,71,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* === HEADER === */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0a0a0f;
+  }
+
+  .logo-text {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .header-badge {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-js { background: rgba(247,223,30,0.15); color: var(--js); border: 1px solid rgba(247,223,30,0.3); }
+  .badge-html { background: rgba(227,76,38,0.15); color: #ff8566; border: 1px solid rgba(227,76,38,0.3); }
+  .badge-css { background: rgba(38,77,228,0.15); color: #7c9dff; border: 1px solid rgba(38,77,228,0.3); }
+
+  /* === AD BANNER === */
+  .ad-banner {
+    position: relative;
+    z-index: 5;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60px;
+  }
+
+  .ad-placeholder {
+    width: 100%;
+    max-width: 728px;
+    height: 50px;
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 1px;
+  }
+
+  /* === MAIN LAYOUT === */
+  main {
+    position: relative;
+    z-index: 5;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  /* === TOOLBAR === */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+  }
+
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toolbar-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .lang-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+  }
+
+  .lang-tab {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    background: transparent;
+    color: var(--text2);
+    transition: var(--transition);
+  }
+
+  .lang-tab:hover { color: var(--text); }
+  .lang-tab.active-js { background: rgba(247,223,30,0.2); color: var(--js); }
+  .lang-tab.active-html { background: rgba(227,76,38,0.2); color: #ff8566; }
+  .lang-tab.active-css { background: rgba(38,77,228,0.2); color: #7c9dff; }
+
+  .indent-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .indent-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: var(--transition);
+  }
+
+  .indent-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .indent-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .select-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    transition: var(--transition);
+  }
+
+  .select-input:focus { border-color: var(--accent); }
+
+  .toolbar-spacer { flex: 1; }
+
+  .format-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 22px;
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+
+  .format-btn:hover {
+    background: #d4eb00;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(232,255,71,0.3);
+  }
+
+  .format-btn:active { transform: translateY(0); }
+
+  .clear-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .clear-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  /* === EDITOR GRID === */
+  .editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .editor-grid { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--transition);
+  }
+
+  .panel:focus-within { border-color: rgba(232,255,71,0.4); }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
+    font-family: var(--mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .panel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .dot-input { background: #ff6b6b; }
+  .dot-output { background: var(--accent); }
+
+  .panel-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .icon-btn:hover { color: var(--text); border-color: var(--text2); }
+
+  .copy-btn { position: relative; }
+
+  .copy-btn.copied {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .line-count {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  /* === TEXTAREA === */
+  .code-textarea {
+    width: 100%;
+    flex: 1;
+    min-height: 420px;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    padding: 16px;
+    tab-size: 2;
+    caret-color: var(--accent);
+  }
+
+  .code-textarea::placeholder { color: var(--text3); }
+
+  /* === OUTPUT PANEL === */
+  .output-container {
+    flex: 1;
+    min-height: 420px;
+    overflow: auto;
+    position: relative;
+  }
+
+  .output-container pre {
+    margin: 0;
+    min-height: 420px;
+  }
+
+  .output-container code {
+    font-family: var(--mono) !important;
+    font-size: 13px !important;
+    line-height: 1.7 !important;
+    padding: 16px !important;
+    background: transparent !important;
+    display: block;
+    white-space: pre;
+  }
+
+  .output-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 420px;
+    gap: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .output-placeholder svg { opacity: 0.3; }
+
+  /* === ERROR TOAST === */
+  .error-box {
+    background: rgba(255,107,107,0.1);
+    border: 1px solid rgba(255,107,107,0.3);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin: 12px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent3);
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .error-box.show { display: flex; }
+
+  /* === STATUS BAR === */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .status-info { display: flex; gap: 16px; align-items: center; }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text2);
+  }
+
+  .status-success { color: var(--accent); }
+  .status-error { color: var(--accent3); }
+
+  /* === FEATURES STRIP === */
+  .features-strip {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .feature-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+  }
+
+  .feature-chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* === OPTIONS PANEL === */
+  .options-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .options-panel.open { display: block; }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+
+  .option-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .option-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+  }
+
+  .toggle input { opacity: 0; width: 0; height: 0; }
+
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--surface3);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid var(--border);
+  }
+
+  .toggle-slider::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--text3);
+    top: 2px;
+    left: 2px;
+    transition: var(--transition);
+  }
+
+  .toggle input:checked + .toggle-slider { background: rgba(232,255,71,0.2); border-color: var(--accent); }
+  .toggle input:checked + .toggle-slider::after { transform: translateX(16px); background: var(--accent); }
+
+  /* === SIDE AD === */
+  .side-layout {
+    display: grid;
+    grid-template-columns: 1fr 160px;
+    gap: 16px;
+  }
+
+  @media (max-width: 1100px) {
+    .side-layout { grid-template-columns: 1fr; }
+    .side-ad { display: none; }
+  }
+
+  .side-ad {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .ad-vertical {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    width: 160px;
+    height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 1px;
+    writing-mode: horizontal-tb;
+    flex-direction: column;
+    gap: 6px;
+    position: sticky;
+    top: 24px;
+  }
+
+  /* === BOTTOM AD === */
+  .bottom-ad {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 1px;
+  }
+
+  /* === FOOTER === */
+  footer {
+    text-align: center;
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-top: 20px;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* === ANIMATIONS === */
+  @keyframes pulse-border {
+    0%, 100% { border-color: rgba(232,255,71,0.2); }
+    50% { border-color: rgba(232,255,71,0.6); }
+  }
+
+  .formatting { animation: pulse-border 0.6s ease infinite; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-container code { animation: fadeInUp 0.3s ease; }
+
+  /* === MOBILE === */
+  @media (max-width: 600px) {
+    header { padding: 0 14px; }
+    .header-badge { display: none; }
+    main { padding: 14px 12px; }
+    .toolbar { padding: 10px 12px; gap: 8px; }
+    .format-btn { padding: 7px 14px; font-size: 12px; }
+    .logo-text { font-size: 15px; }
+    .features-strip { gap: 6px; }
+    .feature-chip { font-size: 10px; }
+  }
+
+  /* === HLJS OVERRIDE === */
+  .hljs { background: transparent !important; }
+
+  /* === SCROLL === */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* === OPTIONS TOGGLE BTN === */
+  .options-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .options-toggle:hover { color: var(--accent2); border-color: var(--accent2); }
+  .options-toggle.active { color: var(--accent2); border-color: var(--accent2); background: rgba(71,209,255,0.07); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">{}</div>
+    <span class="logo-text">Code<span>Craft</span> Pro</span>
+  </div>
+  <div class="header-badge">
+    <span class="badge badge-js">JS</span>
+    <span class="badge badge-html">HTML</span>
+    <span class="badge badge-css">CSS</span>
+  </div>
+</header>
+
+<!-- Top Ad Banner -->
+<div class="ad-banner">
+  <!-- Google AdSense Leaderboard -->
+  <!-- <ins class="adsbygoogle" style="display:inline-block;width:728px;height:50px" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX"></ins> -->
+  <div class="ad-placeholder">◈ ADVERTISEMENT · 728×90 · Google AdSense ◈</div>
+</div>
+
+<main>
+  <div class="side-layout">
+    <div>
+      <!-- Feature chips -->
+      <div class="features-strip">
+        <div class="feature-chip"><span class="feature-chip-dot"></span>Syntax Highlighting</div>
+        <div class="feature-chip"><span class="feature-chip-dot"></span>Auto Indentation</div>
+        <div class="feature-chip"><span class="feature-chip-dot"></span>One-Click Copy</div>
+        <div class="feature-chip"><span class="feature-chip-dot"></span>Minify Support</div>
+        <div class="feature-chip"><span class="feature-chip-dot"></span>Print Formatted</div>
+        <div class="feature-chip"><span class="feature-chip-dot"></span>Offline Ready</div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <!-- Language selector -->
+        <div class="toolbar-group">
+          <span class="toolbar-label">Lang</span>
+          <div class="lang-tabs">
+            <button class="lang-tab active-js" data-lang="javascript" onclick="setLang('javascript')">JS</button>
+            <button class="lang-tab" data-lang="html" onclick="setLang('html')">HTML</button>
+            <button class="lang-tab" data-lang="css" onclick="setLang('css')">CSS</button>
+          </div>
+        </div>
+
+        <!-- Indent size -->
+        <div class="toolbar-group">
+          <span class="toolbar-label">Indent</span>
+          <div class="indent-control">
+            <button class="indent-btn" onclick="changeIndent(-1)">−</button>
+            <span class="indent-value" id="indentDisplay">2</span>
+            <button class="indent-btn" onclick="changeIndent(1)">+</button>
+          </div>
+        </div>
+
+        <!-- Indent type -->
+        <div class="toolbar-group">
+          <span class="toolbar-label">Type</span>
+          <select class="select-input" id="indentType" onchange="updateSettings()">
+            <option value="space">Spaces</option>
+            <option value="tab">Tabs</option>
+          </select>
+        </div>
+
+        <!-- Print width -->
+        <div class="toolbar-group">
+          <span class="toolbar-label">Width</span>
+          <select class="select-input" id="printWidth" onchange="updateSettings()">
+            <option value="80">80</option>
+            <option value="100">100</option>
+            <option value="120">120</option>
+            <option value="60">60</option>
+          </select>
+        </div>
+
+        <!-- Options toggle -->
+        <button class="options-toggle" id="optionsToggleBtn" onclick="toggleOptions()">
+          ⚙ Options
+        </button>
+
+        <div class="toolbar-spacer"></div>
+
+        <button class="clear-btn" onclick="clearAll()">✕ Clear</button>
+        <button class="format-btn" onclick="formatCode()">
+          ⚡ Format Code
+        </button>
+      </div>
+
+      <!-- Advanced Options Panel -->
+      <div class="options-panel" id="optionsPanel">
+        <div class="options-grid">
+          <div class="option-group">
+            <span class="option-label">Semicolons</span>
+            <div class="toggle-row">
+              <span style="font-size:12px;color:var(--text2);font-family:var(--mono)">Add semicolons</span>
+              <label class="toggle"><input type="checkbox" id="optSemi" checked onchange="updateSettings()"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="option-group">
+            <span class="option-label">Quotes</span>
+            <select class="select-input" id="optQuote" onchange="updateSettings()">
+              <option value="false">Double "quotes"</option>
+              <option value="true">Single 'quotes'</option>
+            </select>
+          </div>
+          <div class="option-group">
+            <span class="option-label">Trailing Commas</span>
+            <select class="select-input" id="optTrailingComma" onchange="updateSettings()">
+              <option value="all">All</option>
+              <option value="es5">ES5</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="option-group">
+            <span class="option-label">Bracket Spacing</span>
+            <div class="toggle-row">
+              <span style="font-size:12px;color:var(--text2);font-family:var(--mono)">{ space }</span>
+              <label class="toggle"><input type="checkbox" id="optBracketSpacing" checked onchange="updateSettings()"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="option-group">
+            <span class="option-label">Arrow Parens</span>
+            <select class="select-input" id="optArrowParens" onchange="updateSettings()">
+              <option value="always">Always</option>
+              <option value="avoid">Avoid</option>
+            </select>
+          </div>
+          <div class="option-group">
+            <span class="option-label">End of Line</span>
+            <select class="select-input" id="optEOL" onchange="updateSettings()">
+              <option value="lf">LF</option>
+              <option value="crlf">CRLF</option>
+              <option value="cr">CR</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor Grid -->
+      <div class="editor-grid">
+        <!-- Input Panel -->
+        <div class="panel" id="inputPanel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="panel-dot dot-input"></span>
+              <span id="inputLangLabel">INPUT · JAVASCRIPT</span>
+            </div>
+            <div class="panel-actions">
+              <span class="line-count" id="inputLineCount">0 lines</span>
+              <button class="icon-btn" onclick="loadSample()">⊕ Sample</button>
+              <button class="icon-btn" onclick="pasteFromClipboard()">⊞ Paste</button>
+            </div>
+          </div>
+          <textarea
+            class="code-textarea"
+            id="inputCode"
+            placeholder="// Paste your messy code here...
+// Supports JavaScript, HTML, and CSS
+// Then click ⚡ Format Code
+
+const x={a:1,b:2,c:3};
+function hello(name){console.log('Hello '+name);return name.toUpperCase();}
+const arr=[1,2,3].map(i=>i*2).filter(i=>i>2);"
+            oninput="updateLineCount()"
+            onkeydown="handleTab(event)"
+          ></textarea>
+          <div class="error-box" id="errorBox">
+            <span>⚠</span>
+            <span id="errorMsg"></span>
+          </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="panel" id="outputPanel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="panel-dot dot-output"></span>
+              <span id="outputLangLabel">OUTPUT · FORMATTED</span>
+            </div>
+            <div class="panel-actions">
+              <span class="line-count" id="outputLineCount">— lines</span>
+              <button class="icon-btn" onclick="downloadCode()">↓ Save</button>
+              <button class="icon-btn copy-btn" id="copyBtn" onclick="copyOutput()">⊡ Copy</button>
+            </div>
+          </div>
+          <div class="output-container" id="outputContainer">
+            <div class="output-placeholder" id="outputPlaceholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+              <span>Formatted code will appear here</span>
+            </div>
+            <pre id="outputPre" style="display:none;"><code id="outputCode" class="language-javascript"></code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar" id="statusBar">
+        <div class="status-info">
+          <span class="status-badge" id="statusLang">◈ JAVASCRIPT</span>
+          <span class="status-badge" id="statusIndent">↦ 2 SPACES</span>
+          <span class="status-badge" id="statusWidth">↔ 80</span>
+        </div>
+        <div class="status-info">
+          <span id="statusMsg" class="status-badge">Ready to format</span>
+        </div>
+      </div>
+
+      <!-- Bottom Ad -->
+      <div class="bottom-ad">
+        <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins> -->
+        ◈ ADVERTISEMENT · 728×90 · Google AdSense ◈
+      </div>
+    </div>
+
+    <!-- Side Ad -->
+    <div class="side-ad">
+      <div class="ad-vertical">
+        <!-- <ins class="adsbygoogle" style="display:inline-block;width:160px;height:600px" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX"></ins> -->
+        <span>AD</span>
+        <span>160×600</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  CodeCraft Pro · Free Code Formatter · Supports JS, HTML, CSS · Powered by <a href="https://prettier.io" target="_blank">Prettier</a>
+</footer>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let currentLang = 'javascript';
+let indentSize = 2;
+let formattedOutput = '';
+
+const settings = {
+  semi: true,
+  singleQuote: false,
+  trailingComma: 'all',
+  bracketSpacing: true,
+  arrowParens: 'always',
+  endOfLine: 'lf',
+  printWidth: 80,
+  tabWidth: 2,
+  useTabs: false,
+};
+
+// ============================================================
+// LANG
+// ============================================================
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-tab').forEach(t => {
+    t.className = 'lang-tab';
+    if (t.dataset.lang === lang) {
+      t.classList.add(`active-${lang === 'javascript' ? 'js' : lang}`);
+    }
+  });
+
+  const names = { javascript: 'JAVASCRIPT', html: 'HTML', css: 'CSS' };
+  document.getElementById('inputLangLabel').textContent = `INPUT · ${names[lang]}`;
+  document.getElementById('outputLangLabel').textContent = `OUTPUT · FORMATTED`;
+  document.getElementById('statusLang').textContent = `◈ ${names[lang]}`;
+
+  const hlClass = lang === 'javascript' ? 'language-javascript' : lang === 'html' ? 'language-xml' : 'language-css';
+  document.getElementById('outputCode').className = hlClass;
+
+  clearError();
+}
+
+// ============================================================
+// INDENT
+// ============================================================
+function changeIndent(delta) {
+  indentSize = Math.max(1, Math.min(8, indentSize + delta));
+  document.getElementById('indentDisplay').textContent = indentSize;
+  settings.tabWidth = indentSize;
+  updateStatusBar();
+}
+
+function updateSettings() {
+  settings.semi = document.getElementById('optSemi').checked;
+  settings.singleQuote = document.getElementById('optQuote').value === 'true';
+  settings.trailingComma = document.getElementById('optTrailingComma').value;
+  settings.bracketSpacing = document.getElementById('optBracketSpacing').checked;
+  settings.arrowParens = document.getElementById('optArrowParens').value;
+  settings.endOfLine = document.getElementById('optEOL').value;
+  settings.printWidth = parseInt(document.getElementById('printWidth').value);
+  settings.useTabs = document.getElementById('indentType').value === 'tab';
+  settings.tabWidth = indentSize;
+  updateStatusBar();
+}
+
+function updateStatusBar() {
+  const type = document.getElementById('indentType').value === 'tab' ? 'TABS' : 'SPACES';
+  document.getElementById('statusIndent').textContent = `↦ ${indentSize} ${type}`;
+  document.getElementById('statusWidth').textContent = `↔ ${document.getElementById('printWidth').value}`;
+}
+
+// ============================================================
+// FORMAT
+// ============================================================
+async function formatCode() {
+  const input = document.getElementById('inputCode').value.trim();
+  if (!input) { showError('Paste some code first!'); return; }
+
+  const panel = document.getElementById('outputPanel');
+  panel.classList.add('formatting');
+  document.getElementById('statusMsg').textContent = 'Formatting…';
+  clearError();
+
+  try {
+    updateSettings();
+
+    const parserMap = { javascript: 'babel', html: 'html', css: 'css' };
+    const pluginMap  = { javascript: prettierPlugins.babel, html: prettierPlugins.html, css: prettierPlugins.postcss };
+
+    const result = await prettier.format(input, {
+      parser: parserMap[currentLang],
+      plugins: [pluginMap[currentLang]],
+      ...settings,
+    });
+
+    formattedOutput = result;
+    renderOutput(result);
+    document.getElementById('statusMsg').className = 'status-badge status-success';
+    document.getElementById('statusMsg').textContent = '✓ Formatted successfully';
+  } catch (err) {
+    showError(err.message.split('\n')[0]);
+    document.getElementById('statusMsg').className = 'status-badge status-error';
+    document.getElementById('statusMsg').textContent = '✗ Formatting error';
+  } finally {
+    panel.classList.remove('formatting');
+  }
+}
+
+function renderOutput(code) {
+  const el = document.getElementById('outputCode');
+  el.textContent = code;
+  hljs.highlightElement(el);
+
+  document.getElementById('outputPlaceholder').style.display = 'none';
+  document.getElementById('outputPre').style.display = 'block';
+
+  const lines = code.split('\n').length;
+  document.getElementById('outputLineCount').textContent = `${lines} lines`;
+}
+
+// ============================================================
+// LINE COUNT
+// ============================================================
+function updateLineCount() {
+  const val = document.getElementById('inputCode').value;
+  const lines = val ? val.split('\n').length : 0;
+  document.getElementById('inputLineCount').textContent = `${lines} line${lines !== 1 ? 's' : ''}`;
+  clearError();
+}
+
+// ============================================================
+// COPY
+// ============================================================
+async function copyOutput() {
+  if (!formattedOutput) { showError('Format code first!'); return; }
+  try {
+    await navigator.clipboard.writeText(formattedOutput);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⊡ Copy'; btn.classList.remove('copied'); }, 2000);
+  } catch {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = formattedOutput;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+}
+
+// ============================================================
+// PASTE
+// ============================================================
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('inputCode').value = text;
+    updateLineCount();
+  } catch {
+    showError('Clipboard access denied. Please paste manually (Ctrl+V).');
+  }
+}
+
+// ============================================================
+// DOWNLOAD
+// ============================================================
+function downloadCode() {
+  if (!formattedOutput) { showError('Format code first!'); return; }
+  const extMap = { javascript: 'js', html: 'html', css: 'css' };
+  const blob = new Blob([formattedOutput], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `formatted.${extMap[currentLang]}`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ============================================================
+// CLEAR
+// ============================================================
+function clearAll() {
+  document.getElementById('inputCode').value = '';
+  document.getElementById('outputPlaceholder').style.display = 'flex';
+  document.getElementById('outputPre').style.display = 'none';
+  document.getElementById('outputCode').textContent = '';
+  document.getElementById('inputLineCount').textContent = '0 lines';
+  document.getElementById('outputLineCount').textContent = '— lines';
+  document.getElementById('statusMsg').className = 'status-badge';
+  document.getElementById('statusMsg').textContent = 'Ready to format';
+  formattedOutput = '';
+  clearError();
+}
+
+// ============================================================
+// SAMPLE CODE
+// ============================================================
+const samples = {
+  javascript: `const express=require('express');const app=express();const PORT=3000;
+app.use(express.json());
+const users=[{id:1,name:'Alice',email:'alice@example.com'},{id:2,name:'Bob',email:'bob@example.com'}];
+app.get('/users',(req,res)=>{res.json({success:true,data:users,count:users.length})});
+app.post('/users',(req,res)=>{const{name,email}=req.body;if(!name||!email){return res.status(400).json({error:'Name and email required'})}
+const newUser={id:users.length+1,name,email};users.push(newUser);res.status(201).json(newUser)});
+app.listen(PORT,()=>{console.log('Server running on port '+PORT)});`,
+
+  html: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>My App</title><link rel="stylesheet" href="style.css"></head><body><nav class="navbar"><div class="logo">Brand</div><ul class="nav-links"><li><a href="#home">Home</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul></nav><main class="hero"><h1 class="hero-title">Welcome to My App</h1><p class="hero-desc">This is a sample HTML page that needs formatting.</p><button class="cta-btn" onclick="handleClick()">Get Started</button></main><script src="app.js"></script></body></html>`,
+
+  css: `.container{max-width:1200px;margin:0 auto;padding:0 20px}.navbar{display:flex;align-items:center;justify-content:space-between;height:64px;background:#fff;border-bottom:1px solid #e0e0e0;padding:0 24px}.nav-links{display:flex;gap:24px;list-style:none}.nav-links a{text-decoration:none;color:#333;font-weight:500;transition:color 0.2s}.nav-links a:hover{color:#6366f1}.hero{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;gap:16px}.hero-title{font-size:clamp(2rem,5vw,4rem);font-weight:800;color:#111}.cta-btn{padding:12px 32px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer}`,
+};
+
+function loadSample() {
+  document.getElementById('inputCode').value = samples[currentLang];
+  updateLineCount();
+}
+
+// ============================================================
+// TAB KEY IN TEXTAREA
+// ============================================================
+function handleTab(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const useTab = document.getElementById('indentType').value === 'tab';
+    const indent = useTab ? '\t' : ' '.repeat(indentSize);
+    ta.value = ta.value.substring(0, start) + indent + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = start + indent.length;
+  }
+  // Ctrl/Cmd + Enter to format
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    formatCode();
+  }
+}
+
+// ============================================================
+// ERROR
+// ============================================================
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  document.getElementById('errorMsg').textContent = msg;
+  box.classList.add('show');
+}
+
+function clearError() {
+  document.getElementById('errorBox').classList.remove('show');
+}
+
+// ============================================================
+// OPTIONS TOGGLE
+// ============================================================
+function toggleOptions() {
+  const panel = document.getElementById('optionsPanel');
+  const btn = document.getElementById('optionsToggleBtn');
+  panel.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+updateStatusBar();
+
+// Keyboard shortcut hint
+document.getElementById('inputCode').title = 'Ctrl+Enter to format • Tab for indent';
+
+// AdSense init (uncomment when live)
+// (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</body>
+</html>
